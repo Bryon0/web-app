@@ -25,16 +25,26 @@ const pool = mariadb.createPool({
     host: process.env.DB_HOST, 
     user: process.env.DB_USER, 
     password:  process.env.DB_PASSWORD,
+    database: 'financedb',
     connectionLimit: 5});
 
 const dbconn = {
     host: process.env.DB_HOST, 
     user: process.env.DB_USER, 
     password:  process.env.DB_PASSWORD,
+    database: 'financedb',
     connectionLimit: 5
 };
- 
+
+app.get('/', (res, req) => {
+
+});
+
 app.get('/register', (req, res) => {
+    res.render('register');
+});
+
+app.post('/register', (req, res) => {
     //TODO: Check if the  user exists.  If not create user in the databse.
     const email = req.body.email;
     const fname = req.body.firstname;
@@ -45,23 +55,36 @@ app.get('/register', (req, res) => {
     .then(conn => {
       conn.query("SELECT * FROM user WHERE Email=?", [email])
         .then(rows => {
-          console.log(rows); 
-          conn.end();
+            if(rows.length == 0)
+            {
+                console.log('User does not exist, attempting to create record.');
+                //Encrypt the password.
+                const hash = bcrypt.hash(req.body.password, SALT);  
+                return conn.query("INSERT INTO user (FirstName, LastName, Email, PassWord) VALUES(?, ?, ?, ?);", 
+                    [fname,lname,email,password]);
+            }
+            else
+            {
+                console.log('User record exists.');
+                //Add message
+                //user exits go to the log in page
+                return null;
+                
+            }
+        })
+        .then((res) => {
+            console.log(res);
+            conn.end();
         })
         .catch(err => { 
-          //handle query error
+            console.log(err);
+            conn.end();
         });
     })
     .catch(err => {
-      //handle connection error
+      console.log(err);
     });
-    //Encrypt the password.
-    //const hash = bcrypt.hash(req.body.password, SALT);
-    res.render('register');
-});
-
-app.post('/register', (req, res) => {
-    console.log(req.body);
+  
 });
 
 app.get('/login', (req, res) => {
