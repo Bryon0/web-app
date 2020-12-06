@@ -84,7 +84,6 @@ app.post('/register', (req, res) => {
     .catch(err => {
       console.log(err);
     });
-  
 });
 
 app.get('/login', (req, res) => {
@@ -96,14 +95,31 @@ app.post('/login', (req, res) => {
     const password = req.body.password;
     let hashpassword = "";
 
-    //const isMatch = await bcrypt.compare(req.body.password, password);
-
-    //Is it necessaray to use async to log in?s
-    try {
-        let conn = pool.getConnection();
-    } catch (err) {
-        console.log(err);
-    }
+    mariadb.createConnection(dbconn)
+    .then(conn => {
+      conn.query("SELECT PassWord FROM user WHERE Email=?", [email])
+        .then(rows => {
+            if(rows.length == 0)
+            {
+                //Invalid log in, not record exists
+            }
+            else
+            {
+                //Record exists, now check the password.
+            }
+        })
+        .then((res) => {
+            console.log(res);
+            conn.end();
+        })
+        .catch(err => { 
+            console.log(err);
+            conn.end();
+        });
+    })
+    .catch(err => {
+      console.log(err);
+    });
 });
 
 app.use(function (req, res, next) {
